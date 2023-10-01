@@ -1,6 +1,8 @@
 #' @export
 pro_rata <- function(y, x,
                      control = control_pro_rata()) {
+  y <- y_pro_rata(y)
+  x <- x_pro_rata(x)
   dens <- dens_pro_rata(y, x)
 
   weights <- 1 / dim(x)[[3]]
@@ -12,6 +14,8 @@ pro_rata <- function(y, x,
 
     dens_weighted <- sweep(dens, 3, weights, `*`)
     dens_weighted_total <- apply(dens_weighted, 1:2, sum)
+
+    print(dens_weighted_total)
 
     log_lik <- sum(log(dens_weighted_total))
     if (control[["verbose"]]) {
@@ -41,10 +45,35 @@ control_pro_rata <- function(max_iter = Inf,
 
 #' @export
 predict.pro_rata <- function(object, new_data, ...) {
-  out <- sweep(new_data, 3, object[["weights"]], `*`)
-  apply(out, 1:2, sum)
+  out <- new_data[, , 1]
+  out[] <- apply(sweep(new_data, 3, object[["weights"]], `*`),
+                 1:2, sum)
+  out
+}
+
+y_pro_rata <- function(y) {
+  dm <- dim(y)
+  len_dm <- length(dm)
+  if (len_dm == 0) {
+    y <- matrix(y,
+                nrow = 1)
+  } else if (len_dm == 1) {
+    dim(y) <- c(1, dm)
+  }
+  y
+}
+
+x_pro_rata <- function(x) {
+  dm <- dim(x)
+  len_dm <- length(dm)
+  if (len_dm == 2) {
+    dim(x) <- c(1, dm)
+  }
+
+  x_total <- apply(x, c(1, 3), sum)
+  sweep(x, c(1, 3), x_total, `/`)
 }
 
 dens_pro_rata <- function(y, x) {
-  sweep(x, 1:2, y, \(x, y) (x / sum(x)) ^ y)
+  sweep(x, 1:2, y, \(x, y) x ^ y)
 }

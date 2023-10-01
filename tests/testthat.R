@@ -7,6 +7,6 @@
 # * https://testthat.r-lib.org/articles/special-files.html
 
 library(testthat)
-library(proratedata)
+library(prorata)
 
-test_check("proratedata")
+test_check("prorata")

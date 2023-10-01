@@ -3,6 +3,4 @@
 S3method(predict,pro_rata)
 export(control_pro_rata)
 export(pro_rata)
-import(vctrs)
-importFrom(rlang,"%||%")
 importFrom(stats,predict)
