@@ -1,6 +1,6 @@
 set.seed(1234)
 
-test_that("`pro_rata()` works", {
+test_that("`prorata_importance()` works", {
   l <- 20
   m <- 5
   n <- 3
@@ -11,24 +11,24 @@ test_that("`pro_rata()` works", {
 
   x_1 <- x
   x_1[, , 1] <- y
-  prorata_1 <- pro_rata(y, x_1,
-                        control = control_pro_rata(tolerance = 1e-6))
+  prorata_1 <- prorata_importance(y, x_1,
+                                  control = control_prorata(verbose = TRUE))
   expect_equal(sum(prorata_1$weights), 1)
   expect_equal(unname(prorata_1$weights), c(1, 0, 0),
                tolerance = 1e-3)
 
   x_2 <- x
   x_2[, , 2] <- y
-  prorata_2 <- pro_rata(y, x_2,
-                        control = control_pro_rata(tolerance = 1e-6))
+  prorata_2 <- prorata_importance(y, x_2,
+                                  control = control_prorata(verbose = TRUE))
   expect_equal(sum(prorata_2$weights), 1)
   expect_equal(unname(prorata_2$weights), c(0, 1, 0),
                tolerance = 1e-3)
 
   x_3 <- x
   x_3[, , 3] <- y
-  prorata_3 <- pro_rata(y, x_3,
-                        control = control_pro_rata(tolerance = 1e-6))
+  prorata_3 <- prorata_importance(y, x_3,
+                                  control = control_prorata(verbose = TRUE))
   expect_equal(sum(prorata_3$weights), 1)
   expect_equal(unname(prorata_3$weights), c(0, 0, 1),
                tolerance = 1e-3)

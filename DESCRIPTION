@@ -12,6 +12,8 @@ LazyData: true
 RoxygenNote: 7.2.3
 Imports: 
     cli,
+    mvtnorm,
+    rlang,
     stats
 Suggests: 
     testthat (>= 3.0.0)
