@@ -74,7 +74,6 @@ check_y_x_prorata <- function(y, x,
 }
 
 prorata_impl <- function(dens, control) {
-  dens <- pmax(dens, .Machine$double.xmin)
   dens <- pmin(dens, .Machine$double.xmax)
 
   weights <- 1 / dim(dens)[[2]]
@@ -85,7 +84,9 @@ prorata_impl <- function(dens, control) {
     iter <- iter + 1
 
     dens_weighted <- sweep(dens, 2, weights, `*`)
+
     dens_weighted_total <- apply(dens_weighted, 1, sum)
+    dens_weighted_total <- pmax(dens_weighted_total, .Machine$double.xmin)
 
     log_lik <- sum(log(dens_weighted_total))
     if (control[["verbose"]]) {
