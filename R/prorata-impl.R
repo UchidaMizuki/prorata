@@ -1,62 +1,3 @@
-#' @export
-prorata_frequency <- function(y, x,
-                              control = control_prorata()) {
-  check_y_x_prorata(y, x)
-  x <- x_prorata(x)
-
-  # Multinomial Density
-  dm_x <- dim(x)
-  dm_x_1 <- dm_x[[1]]
-  dm_x_3 <- dm_x[[3]]
-
-  dens <- matrix(NA_real_, dm_x_1, dm_x_3)
-
-  for (i in seq_len(dm_x_1)) {
-    y_i <- y[i, ]
-
-    for (k in seq_len(dm_x_3)) {
-      x_ik <- x[i, , k]
-
-      dens[i, k] <- stats::dmultinom(y_i,
-                                     prob = x_ik)
-    }
-  }
-
-  prorata_impl(dens = dens,
-               control = control)
-}
-
-#' @export
-prorata_importance <- function(y, x,
-                               control = control_prorata()) {
-  check_y_x_prorata(y, x)
-  x <- x_prorata(x)
-
-  # Multivariate Normal Density
-  dm_x <- dim(x)
-  dm_x_1 <- dm_x[[1]]
-  dm_x_3 <- dm_x[[3]]
-
-  dens <- matrix(NA_real_, dm_x_1, dm_x_3)
-
-  for (i in seq_len(dm_x_1)) {
-    y_i <- y[i, ]
-    y_i_total <- sum(y_i)
-
-    for (k in seq_len(dm_x_3)) {
-      x_ik <- x[i, , k]
-
-      # https://www.stat.umn.edu/geyer/5102/notes/brand.pdf
-      dens[i, k] <- mvtnorm::dmvnorm(y_i / y_i_total,
-                                     mean = x_ik,
-                                     sigma = (diag(x_ik) - outer(x_ik, x_ik))) / y_i_total
-    }
-  }
-
-  prorata_impl(dens = dens,
-               control = control)
-}
-
 check_y_x_prorata <- function(y, x,
                               frequency = FALSE) {
   dm_y <- dim(y)
@@ -74,8 +15,6 @@ check_y_x_prorata <- function(y, x,
 }
 
 prorata_impl <- function(dens, control) {
-  dens <- pmin(dens, .Machine$double.xmax)
-
   weights <- 1 / dim(dens)[[2]]
   log_lik_pred <- -Inf
 
@@ -86,7 +25,6 @@ prorata_impl <- function(dens, control) {
     dens_weighted <- sweep(dens, 2, weights, `*`)
 
     dens_weighted_total <- apply(dens_weighted, 1, sum)
-    dens_weighted_total <- pmax(dens_weighted_total, .Machine$double.xmin)
 
     log_lik <- sum(log(dens_weighted_total))
     if (control[["verbose"]]) {
@@ -116,24 +54,10 @@ control_prorata <- function(max_iter = Inf,
 
 #' @export
 predict.prorata <- function(object, new_data, ...) {
-  new_data
-
   out <- new_data[, , 1]
   out[] <- apply(sweep(new_data, 3, object[["weights"]], `*`),
                  1:2, sum)
   out
-}
-
-y_prorata <- function(y) {
-  dm <- dim(y)
-  len_dm <- length(dm)
-  if (len_dm == 0) {
-    y <- matrix(y,
-                nrow = 1)
-  } else if (len_dm == 1) {
-    dim(y) <- c(1, dm)
-  }
-  y
 }
 
 x_prorata <- function(x) {
