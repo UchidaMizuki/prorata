@@ -9,7 +9,7 @@ prorata_importance <- function(y, x,
   dm_x_1 <- dm_x[[1]]
   dm_x_3 <- dm_x[[3]]
 
-  dens <- matrix(NA_real_, dm_x_1, dm_x_3)
+  log_dens <- matrix(NA_real_, dm_x_1, dm_x_3)
 
   for (i in seq_len(dm_x_1)) {
     y_i <- y[i, ]
@@ -19,12 +19,13 @@ prorata_importance <- function(y, x,
       x_ik <- x[i, , k]
 
       # https://www.stat.umn.edu/geyer/5102/notes/brand.pdf
-      dens[i, k] <- mvtnorm::dmvnorm(y_i / y_i_total,
-                                     mean = x_ik,
-                                     sigma = (diag(x_ik) - outer(x_ik, x_ik))) / y_i_total
+      log_dens[i, k] <- mvtnorm::dmvnorm(y_i / y_i_total,
+                                         mean = x_ik,
+                                         sigma = (diag(x_ik) - outer(x_ik, x_ik)),
+                                         log = TRUE) - log(y_i_total)
     }
   }
 
-  prorata_impl(dens = dens,
+  prorata_impl(log_dens = log_dens,
                control = control)
 }

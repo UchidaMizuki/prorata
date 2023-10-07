@@ -14,8 +14,9 @@ check_y_x_prorata <- function(y, x,
   )
 }
 
-prorata_impl <- function(dens, control) {
-  weights <- 1 / dim(dens)[[2]]
+prorata_impl <- function(log_dens, control) {
+  dens <- exp(log_dens)
+  weights <- 1 / dim(log_dens)[[2]]
   log_lik_pred <- -Inf
 
   iter <- 1
