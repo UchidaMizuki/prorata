@@ -3,7 +3,6 @@ prorata <- function(y, x,
                     type = c("squared", "absolute"),
                     control = control_prorata()) {
   check_y_x_prorata(y, x)
-  x <- x_prorata(x)
 
   if (is.function(type)) {
     fn <- type
@@ -45,11 +44,13 @@ prorata <- function(y, x,
 }
 
 #' @export
-control_prorata <- function(algorithm = "NLOPT_LD_SLSQP",
-                            xtol_rel = 1e-10,
-                            maxeval = 1e6,
+control_prorata <- function(verbose = FALSE,
+                            algorithm = "NLOPT_LD_SLSQP",
+                            xtol_rel = 1e-9,
+                            maxeval = 1e3,
                             ...) {
-  structure(rlang::list2(algorithm = algorithm,
+  structure(rlang::list2(print_level = verbose,
+                         algorithm = algorithm,
                          xtol_rel = xtol_rel,
                          maxeval = maxeval,
                          ...),
@@ -86,11 +87,6 @@ check_y_x_prorata <- function(y, x,
     all(y >= 0),
     all(x >= 0)
   )
-}
-
-x_prorata <- function(x) {
-  x_total <- apply(x, c(1, 3), sum)
-  sweep(x, c(1, 3), x_total, `/`)
 }
 
 predict_prorata <- function(weights, x) {
