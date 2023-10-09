@@ -12,11 +12,9 @@ LazyData: true
 RoxygenNote: 7.2.3
 Imports: 
     cli,
-    extraDistr,
-    mvtnorm,
+    nloptr,
     rlang,
-    stats,
-    stats4
+    stats
 Suggests: 
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
