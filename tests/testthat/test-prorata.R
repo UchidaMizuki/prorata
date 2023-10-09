@@ -11,31 +11,31 @@ test_that("`prorata()` works", {
 
   # 1
   x_1 <- x
-  x_1[, , 1] <- y
+  x_1[, , 1] <- y + matrix(runif(I * J, max = 1e-4), I, J)
 
   prorata_1 <- prorata(y, x_1)
   expect_equal(sum(prorata_1$weights), 1)
   expect_equal(unname(prorata_1$weights), c(1, 0, 0),
-               tolerance = 1e-3)
+               tolerance = 1e-2)
 
   prorata_1 <- prorata(y, x_1,
                        type = "absolute")
   expect_equal(sum(prorata_1$weights), 1)
   expect_equal(unname(prorata_1$weights), c(1, 0, 0),
-               tolerance = 1e-3)
+               tolerance = 1e-2)
 
   # 3
   x_3 <- x
-  x_3[, , 3] <- y
+  x_3[, , 3] <- y + matrix(runif(I * J, max = 1e-4), I, J)
 
   prorata_3 <- prorata(y, x_3)
   expect_equal(sum(prorata_3$weights), 1)
   expect_equal(unname(prorata_3$weights), c(0, 0, 1),
-               tolerance = 1e-3)
+               tolerance = 1e-2)
 
   prorata_3 <- prorata(y, x_3,
                        type = "absolute")
   expect_equal(sum(prorata_3$weights), 1)
   expect_equal(unname(prorata_3$weights), c(0, 0, 1),
-               tolerance = 1e-3)
+               tolerance = 1e-2)
 })

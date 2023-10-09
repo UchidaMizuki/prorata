@@ -1,58 +1,65 @@
 #' @export
 prorata <- function(y, x,
                     type = c("squared", "absolute"),
-                    control = control_prorata()) {
+                    f = NULL,
+                    grad = NULL,
+                    control = control_prorata(),
+                    ...) {
   check_y_x_prorata(y, x)
 
-  if (is.function(type)) {
-    fn <- type
-  } else {
+  get_weights <- \(par) c(1 - sum(par), par)
+
+  if (is.null(f)) {
     type <- rlang::arg_match(type, c("squared", "absolute"))
 
-    fn <- switch(
+    f <- switch(
       type,
-      squared = \(truth, estimate) {
-        error <- truth - estimate
-        objective <- sum(error^2)
-        gradient <- apply(sweep(-x, 1:2, 2 * error, `*`), 3, sum)
-
-        list(objective = objective,
-             gradient  = gradient)
+      squared = \(par) {
+        y_pred <- predict_prorata(x = x,
+                                  weights = get_weights(par))
+        sum((y - y_pred)^2)
       },
-      absolute = \(truth, estimate) {
-        error <- truth - estimate
-        objective <- sum(abs(error))
-        gradient <- apply(sweep(-x, 1:2, error / abs(error), `*`), 3, sum)
+      absolute = \(par) {
+        y_pred <- predict_prorata(x = x,
+                                  weights = get_weights(par))
+        sum(abs(y - y_pred))
+      }
+    )
 
-        list(objective = objective,
-             gradient  = gradient)
+    grad <- switch(
+      type,
+      squared = \(par) {
+        y_pred <- predict_prorata(x = x,
+                                  weights = get_weights(par))
+        apply(sweep(-x, 1:2, 2 * (y - y_pred), `*`), 3, sum)[-1]
+      },
+      absolute = \(par) {
+        y_pred <- predict_prorata(x = x,
+                                  weights = get_weights(par))
+        apply(sweep(-x, 1:2, sign(y - y_pred), `*`), 3, sum)[-1]
       }
     )
   }
 
   K <- dim(x)[[3]]
-  nloptr <- nloptr::nloptr(x0 = rep(1 / K, K),
-                           eval_f = \(weights) fn(y, predict_prorata(weights, x)),
-                           lb = rep(0, K),
-                           ub = rep(1, K),
-                           eval_g_eq = \(weights) list(constraints = sum(weights) - 1,
-                                                       jacobian = rep(1, K)),
-                           opts = control)
-  structure(list(weights = nloptr[["solution"]],
-                 nloptr = nloptr),
+  opt <- stats::constrOptim(theta = rep(1 / K, K - 1),
+                            f = f,
+                            grad = grad,
+                            ui = rbind(-rep(1, K - 1),
+                                       diag(K - 1)),
+                            ci = c(-1, rep(0, K - 1)),
+                            control = control,
+                            ...)
+  structure(list(weights = get_weights(opt[["par"]])),
             class = "prorata")
 }
 
 #' @export
 control_prorata <- function(verbose = FALSE,
-                            algorithm = "NLOPT_LD_SLSQP",
-                            xtol_rel = 1e-9,
-                            maxeval = 1e3,
+                            max_iter = 1e3,
                             ...) {
-  structure(rlang::list2(print_level = verbose,
-                         algorithm = algorithm,
-                         xtol_rel = xtol_rel,
-                         maxeval = maxeval,
+  structure(rlang::list2(trace = verbose,
+                         maxit = max_iter,
                          ...),
             class = "control_prorata")
 }
@@ -60,7 +67,8 @@ control_prorata <- function(verbose = FALSE,
 #' @export
 predict.prorata <- function(object, new_data, ...) {
   out <- new_data[, , 1]
-  out[] <- predict_prorata(object[["weights"]], new_data)
+  out[] <- predict_prorata(x = new_data,
+                           weights = object[["weights"]])
   out
 }
 
@@ -89,7 +97,7 @@ check_y_x_prorata <- function(y, x,
   )
 }
 
-predict_prorata <- function(weights, x) {
+predict_prorata <- function(x, weights) {
   apply(sweep(x, 3, weights, `*`), 1:2, sum)
 }
 
