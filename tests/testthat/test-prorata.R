@@ -14,14 +14,14 @@ test_that("`prorata()` works", {
   x_1[, , 1] <- y + matrix(runif(I * J, max = 1e-4), I, J)
 
   prorata_1 <- prorata(y, x_1)
-  expect_equal(sum(prorata_1$weights), 1)
-  expect_equal(unname(prorata_1$weights), c(1, 0, 0),
+  expect_equal(sum(prorata_1), 1)
+  expect_equal(as.double(prorata_1), c(1, 0, 0),
                tolerance = 1e-2)
 
   prorata_1 <- prorata(y, x_1,
                        type = "absolute")
-  expect_equal(sum(prorata_1$weights), 1)
-  expect_equal(unname(prorata_1$weights), c(1, 0, 0),
+  expect_equal(sum(prorata_1), 1)
+  expect_equal(as.double(prorata_1), c(1, 0, 0),
                tolerance = 1e-2)
 
   # 3
@@ -29,13 +29,13 @@ test_that("`prorata()` works", {
   x_3[, , 3] <- y + matrix(runif(I * J, max = 1e-4), I, J)
 
   prorata_3 <- prorata(y, x_3)
-  expect_equal(sum(prorata_3$weights), 1)
-  expect_equal(unname(prorata_3$weights), c(0, 0, 1),
+  expect_equal(sum(prorata_3), 1)
+  expect_equal(as.double(prorata_3), c(0, 0, 1),
                tolerance = 1e-2)
 
   prorata_3 <- prorata(y, x_3,
                        type = "absolute")
-  expect_equal(sum(prorata_3$weights), 1)
-  expect_equal(unname(prorata_3$weights), c(0, 0, 1),
+  expect_equal(sum(prorata_3), 1)
+  expect_equal(as.double(prorata_3), c(0, 0, 1),
                tolerance = 1e-2)
 })

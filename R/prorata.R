@@ -52,7 +52,7 @@ prorata <- function(y, x,
                             ci = c(-1, rep(0, K - 1)),
                             control = control,
                             ...)
-  structure(list(weights = get_weights(opt[["par"]])),
+  structure(get_weights(opt[["par"]]),
             class = "prorata")
 }
 
@@ -73,21 +73,12 @@ predict.prorata <- function(object, new_data, ...) {
   dm <- dim(new_data)
   dim(x) <- c(prod(dm[1:2]), dm[[3]])
   pred <- predict_prorata(x = x,
-                          weights = object[["weights"]])
+                          weights = object)
   dim(pred) <- dim(new_data)[1:2]
 
   out <- new_data[, , 1]
   out[] <- pred
   out
-}
-
-#' @export
-print.prorata <- function(x, ...) {
-  weights <- big_mark(x$weights)
-  cli::cli_inform(c("prorata",
-                    "*" = "{length(weights)} cluster{?s}",
-                    "*" = "weights: {weights}"))
-  invisible(x)
 }
 
 prepare_y_x_prorata <- function(y, x) {
