@@ -1,9 +1,18 @@
+#' Prorate values
+#'
+#' @param y A double matrix (observations x categories).
+#' @param x A double array (observations x categories x clusters).
+#' @param type Optimization type of `"squared"` (default) or `absolute"`.
+#' Ignored if `f` is specified.
+#' @param f passed to [constrOptim()].
+#' @param ... passed to [constrOptim()].
+#'
+#' @return A double vector of weights with `prorata` class
+#'
 #' @export
 prorata <- function(y, x,
                     type = c("squared", "absolute"),
                     f = NULL,
-                    grad = NULL,
-                    control = control_prorata(),
                     ...) {
   data <- prepare_y_x_prorata(y, x)
   y <- data$y
@@ -50,20 +59,9 @@ prorata <- function(y, x,
                             ui = rbind(-rep(1, K - 1),
                                        diag(K - 1)),
                             ci = c(-1, rep(0, K - 1)),
-                            control = control,
                             ...)
   structure(get_weights(opt[["par"]]),
             class = "prorata")
-}
-
-#' @export
-control_prorata <- function(verbose = FALSE,
-                            max_iter = 1e3,
-                            ...) {
-  structure(rlang::list2(trace = verbose,
-                         maxit = max_iter,
-                         ...),
-            class = "control_prorata")
 }
 
 #' @export
@@ -84,6 +82,7 @@ predict.prorata <- function(object, new_data, ...) {
 prepare_y_x_prorata <- function(y, x) {
   dm_y <- dim(y)
   dm_x <- dim(x)
+  dmnms <- dimnames(x)
 
   stopifnot(
     length(dm_y) == 2,
@@ -102,6 +101,7 @@ prepare_y_x_prorata <- function(y, x) {
   x <- sweep(x, c(1, 3), x_total, `/`)
   x <- sweep(x, 1, y_total, `*`)
   dim(x) <- c(prod(dm_x[1:2]), dm_x[[3]])
+  dimnames(x)[[2]] <- dmnms[[3]]
 
   list(y = y,
        x = x)
