@@ -1,0 +1,85 @@
+---
+output: github_document
+---
+
+<!-- README.md is generated from README.Rmd. Please edit that file -->
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.path = "man/figures/README-",
+  out.width = "100%"
+)
+```
+
+# prorata
+
+<!-- badges: start -->
+
+<!-- badges: end -->
+
+The goal of prorata is to ...
+
+## Installation
+
+You can install the development version of prorata from [GitHub](https://github.com/) with:
+
+``` r
+# install.packages("devtools")
+devtools::install_github("UchidaMizuki/prorata")
+```
+
+## Example
+
+```{r, message=FALSE, warning=FALSE}
+library(prorata)
+library(tidyverse)
+```
+
+### Freeny's Revenue Data
+
+-   Quarterly revenues are estimated from prorated values for annual revenues based on price index, income level, and market potential
+-   Estimate weights that sum to 1 with the least squared error (or absolute error)
+-   Input the following `y` and `x` to `prorata()`
+    -   `y`: Quarterly revenues (observations x categories)
+    -   `x`: Prorated values for annual revenues (observations x categories x clusters)
+-   Apply `predict()` to `prorata()` output
+
+```{r}
+data <- freeny |> 
+  as_tibble(rownames = "year_quarter") |> 
+  separate_wider_delim(year_quarter, 
+                       delim = ".",
+                       names = c("year", "quarter"),
+                       too_few = "align_start") |> 
+  replace_na(list(quarter = "0"))
+
+y <- xtabs(y ~ year + quarter,
+           data = data)
+y
+
+x <- data |> 
+  mutate(across(!c(quarter, y),
+                \(x) x / sum(x) * sum(y)),
+         .by = year,
+         .keep = "unused") |> 
+  pivot_longer(!c(year, quarter)) |> 
+  xtabs(value ~ year + quarter + name,
+        data = _)
+x
+
+fitted <- prorata(y, x,
+                  type = "squared")
+fitted
+
+pred <- predict(fitted,
+                new_data = x)
+pred
+
+tibble(obs = as.double(y),
+       pred = as.double(pred)) |>
+  filter(obs > 0) |>
+  ggplot(aes(obs, pred)) +
+  geom_point()
+```
